@@ -1,0 +1,575 @@
+{
+  "name": "agent-musical-automatise",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -672,
+        -32
+      ],
+      "id": "6b0ad6e8-7b2f-4ac5-8c48-31bb53684dc0",
+      "name": "Telegram Trigger",
+      "webhookId": "f358d883-31d1-48f1-93e2-31dece9346a4",
+      "credentials": {
+        "telegramApi": {
+          "id": "UetPQ3HTSPVND0kr",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -256,
+        -32
+      ],
+      "id": "aea9a5c4-8dc2-4595-9e28-120a3392be05",
+      "name": "Wait",
+      "webhookId": "d9ee256c-8730-4fcc-bb07-5282334c34bc"
+    },
+    {
+      "parameters": {
+        "url": "https://api.sunoapi.org/api/v1/lyrics/record-info",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <token>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -48,
+        -32
+      ],
+      "id": "b7033068-9bdd-4e41-b72f-8eccbca235cd",
+      "name": "Get lyrics request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ffc4dc54-41d9-490d-8939-dc2bf0f0d7ef",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "SUCCESS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        160,
+        -32
+      ],
+      "id": "a12845fc-dab4-4ec9-aac6-b5f1592c056a",
+      "name": "Check lyrics"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an elite AI Music Generation Agent specialized in creating structured metadata for Suno AI music generation.\n\nYour mission is to analyze the user's musical request and generate a STRICTLY VALID JSON object optimized for the Suno API.\n\nCRITICAL RULES:\n\n* Return ONLY valid JSON\n* No markdown\n* No explanations\n* No comments\n* No reasoning\n* No extra text\n* No code block\n* No formatting outside JSON\n\nThe JSON MUST ALWAYS follow this EXACT structure:\n\n{\n\"style\": \"Music genre or vibe\",\n\"title\": \"Creative song title\",\n\"customMode\": true,\n\"instrumental\": false,\n\"model\": \"V4_5ALL\",\n\"negativeTags\": \"acoustic, classical, slow, ballad\",\n\"callbackUrl\": \"https://api.example.com/callback\"\n}\n\nFIELD RULES:\n\n1. style\n\n* Detect the musical genre, vibe, atmosphere, energy and emotion\n* Keep it short and clean\n* Use professional music genre naming\n* Examples:\n\n  * aggressive futuristic rap → \"Trap\"\n  * emotional guitar anthem → \"Rock\"\n  * futuristic nightclub sound → \"EDM\"\n  * latin summer vibe → \"Latin Pop\"\n  * dark cinematic orchestral → \"Cinematic\"\n\n2. title\n\n* Create an ORIGINAL and CREATIVE title\n* Keep it short\n* Memorable\n* Emotional or cinematic if relevant\n* Avoid generic titles\n\n3. customMode\n\n* Always true\n\n4. instrumental\n\n* true ONLY if the user explicitly asks for instrumental music\n* otherwise false\n\n5. model\n\n* Always:\n  \"V4_5ALL\"\n\n6. negativeTags\n\n* Default:\n  \"acoustic, classical, slow, ballad\"\n* Remove tags only if explicitly requested by the user\n\n7. callbackUrl\n\n* Always:\n  \"https://api.example.com/callback\"\n\n8. NEVER add additional fields\n\n9. NEVER return invalid JSON\n\n10. NEVER wrap output inside markdown\n\nGOOD OUTPUT EXAMPLE:\n\n{\n\"style\": \"Trap\",\n\"title\": \"Neon Dominion\",\n\"customMode\": true,\n\"instrumental\": false,\n\"model\": \"V4_5ALL\",\n\"negativeTags\": \"acoustic, classical, slow, ballad\",\n\"callbackUrl\": \"https://api.example.com/callback\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        368,
+        -128
+      ],
+      "id": "94fd744f-3914-4b4d-9ca4-483816103c12",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\"style\": \"Trap\",\n\"title\": \"Neon Dominion\",\n\"customMode\": true,\n\"instrumental\": false,\n\"model\": \"V4_5ALL\",\n\"negativeTags\": \"acoustic, classical, slow, ballad\",\n\"callbackUrl\": \"https://api.example.com/callback\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        80
+      ],
+      "id": "26c61149-a3c7-4d96-9304-b8e3fd5b5545",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        464,
+        176
+      ],
+      "id": "86ce8096-a315-491a-8c56-6aae909ac88b",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        -128
+      ],
+      "id": "43389842-fd9c-4823-9c66-514a620b63d7",
+      "name": "Wait1",
+      "webhookId": "6930130e-159b-4e86-88e2-814b117bb439"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sunoapi.org/api/v1/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <token>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "customMode",
+              "value": "true"
+            },
+            {
+              "name": "instrumental",
+              "value": "false"
+            },
+            {
+              "name": "model",
+              "value": "=V4_5ALL"
+            },
+            {
+              "name": "callBackUrl",
+              "value": "https://api.example.com/callback"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $('Get lyrics request').item.json.data.response.data[0].text }} "
+            },
+            {
+              "name": "style",
+              "value": "={{ $json.output.style }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.output.title }}"
+            },
+            {
+              "name": "negativeTags",
+              "value": "={{ $json.output.negativeTags }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        752,
+        -128
+      ],
+      "id": "55f0d481-2aeb-42c9-a52a-079c0708caae",
+      "name": "generate audio task"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sunoapi.org/api/v1/lyrics",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "=Authorization",
+              "value": "Bearer <token>"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "callBackUrl",
+              "value": "https://api.example.com/callback"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -464,
+        -32
+      ],
+      "id": "7a3b6b3e-fbbd-4d28-a50b-77f5bb6fd1e1",
+      "name": "generate lyrics task"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        336,
+        128
+      ],
+      "id": "35b97c26-762c-4686-bc6a-608befd7601e",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "o4lL1OmrShrvEiLD",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "51ee0e3e-84a3-49d9-aeed-b003f3412658",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "SUCCESS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1344,
+        -128
+      ],
+      "id": "4da0ac9c-a43c-4e80-a0a1-28dbb6253342",
+      "name": "check Query"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Query Task').item.json.data.response.sunoData[0].sourceStreamAudioUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1552,
+        -176
+      ],
+      "id": "fba9c18d-ba10-4839-977c-7499da6a5701",
+      "name": "Downloard Audio"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.sunoapi.org/api/v1/generate/record-info",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $('generate audio task').item.json.data.taskId }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <token>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1136,
+        -128
+      ],
+      "id": "0286d575-7d5e-494b-9b1e-bfbfa1d14bf3",
+      "name": "Query Task"
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        -176
+      ],
+      "id": "72e428f8-2b68-4556-a186-8a835add224c",
+      "name": "Send Audio",
+      "webhookId": "9069ff15-b0e2-443c-996c-e4189e8e7503",
+      "credentials": {
+        "telegramApi": {
+          "id": "UetPQ3HTSPVND0kr",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "generate lyrics task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get lyrics request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get lyrics request": {
+      "main": [
+        [
+          {
+            "node": "Check lyrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check lyrics": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "generate audio task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Query Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate audio task": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate lyrics task": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check Query": {
+      "main": [
+        [
+          {
+            "node": "Downloard Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Task": {
+      "main": [
+        [
+          {
+            "node": "check Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Downloard Audio": {
+      "main": [
+        [
+          {
+            "node": "Send Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "939f00ca-15f6-49c8-b75a-8233979da4af",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "20a2a77f745cdce05e13abe3bd91ac2606ba631c07df0cfdeeabd2676244690e"
+  },
+  "id": "cvlxgiwaOoYSSKgT",
+  "tags": []
+}
